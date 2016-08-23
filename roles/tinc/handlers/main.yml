@@ -1,0 +1,30 @@
+---
+- name: Enable and (Re-)start tinc (RedHat)
+  service: name="tinc@{{ tinc_name }}" state=restarted enabled=yes
+  when: ansible_distribution in ('CentOS', 'RedHat')
+  become: yes
+
+- block:
+  - name: Enable and (Re-)start tinc (Fedora, Arch)
+    service: name="tinc" state=restarted enabled=yes
+    notify: Enable and (Re-)start tinc (Fedora, Arch tinc@)
+    become: yes
+  - name: Enable and (Re-)start tinc (Fedora, Arch tinc@)
+    service: name="tinc@{{ tinc_name }}" state=restarted enabled=yes
+    become: yes
+  when: ansible_distribution in ('Fedora', 'Archlinux')
+
+- name: Enable and (Re-)start tinc (Debian)
+  service: name="tinc" state=restarted enabled=yes
+  when: ansible_distribution in ('Debian', 'Ubuntu')
+  become: yes
+
+- name: Reload firewalld
+  service: name=firewalld state=reloaded
+  become: yes
+
+- name: Restart NetworkManager
+  service:
+    name: NetworkManager
+    state: restarted
+  become: yes

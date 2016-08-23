@@ -1,0 +1,5 @@
+---
+- { include: debug.yml, when: debug }
+- { include: install.yml, become: yes }
+- { include: provision.yml, become: yes }
+- { include: firewall.yml, become: yes }

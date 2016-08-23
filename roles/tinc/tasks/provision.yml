@@ -1,0 +1,91 @@
+---
+- name: Set tinc directory name
+  set_fact:
+    tinc_dir: "/etc/tinc/{{ tinc_name }}"
+- name: Nuke old tinc directory
+  file:
+    path: "{{ tinc_dir }}"
+    state: absent
+- name: Create tinc directory
+  file:
+    path: "{{ tinc_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+- name: Create tinc/hosts directory
+  file:
+    path: "{{ tinc_dir }}/hosts"
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+- name: Template tinc-up
+  template:
+    src: tinc-up.j2
+    dest: "{{ tinc_dir }}/tinc-up"
+    owner: root
+    group: root
+    mode: 0700
+- name: Template tinc-down
+  template:
+    src: tinc-down.j2
+    dest: "{{ tinc_dir }}/tinc-down"
+    owner: root
+    group: root
+    mode: 0700
+- name: Template tinc.conf
+  template:
+    src: tinc.conf.j2
+    dest: "{{ tinc_dir }}/tinc.conf"
+    owner: root
+    group: root
+    mode: 0600
+- name: Template private RSA key
+  template:
+    src: private_rsa.j2
+    dest: "{{ tinc_dir }}/rsa_key.priv"
+    owner: root
+    group: root
+    mode: 0600
+- name: Template public RSA keys for all hosts
+  template:
+    src: public_rsa.j2
+    dest: "{{ tinc_dir}}/hosts/{{ hostvars[item].inventory_hostname }}"
+    owner: root
+    group: root
+    mode: 0600
+  with_items: "{{ groups['all'] }}"
+  notify:
+    - Enable and (Re-)start tinc (RedHat)
+    - Enable and (Re-)start tinc (Fedora, Arch)
+    - Enable and (Re-)start tinc (Debian)
+- name: Template nets.boot for Debian based systems
+  template: src=nets.boot.j2 dest=/etc/tinc/nets.boot owner=root group=root mode=0600
+  when: ansible_distribution in ('Debian', 'Ubuntu')
+
+- name: Check if /etc/NetworkManager/NetworkManager.conf exists
+  stat:
+    path: /etc/NetworkManager/NetworkManager.conf
+  register: networkmanager_conf
+- name: Check if /etc/NetworkManager/dnsmasq.d exists
+  stat:
+    path: /etc/NetworkManager/dnsmasq.d
+  register: dnsmasqd
+
+- name: Check if we actually use dnsmasq in combination with NetworkManager
+  command: grep -Fxq "dns=dnsmasq" /etc/NetworkManager/NetworkManager.conf
+  always_run: True
+  ignore_errors: True
+  changed_when: False
+  register: networkmanager_usage
+  when: networkmanager_conf.stat.exists
+
+- name: Template dnsmasq configuration
+  template:
+    src: tinc.dnsmasq.conf
+    dest: /etc/NetworkManager/dnsmasq.d/tinc.conf
+    owner: root
+    backup: yes
+  when: dnsmasqd.stat.isdir is defined and dnsmasqd.stat.isdir and networkmanager_usage.rc == 0
+  notify: Restart NetworkManager

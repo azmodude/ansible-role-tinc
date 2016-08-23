@@ -1,0 +1,5 @@
+---
+tinc_name: azmoint
+tinc_first_three: 172.20.50
+tinc_subnet: 26
+tinc_network: "{{ tinc_first_three }}.0/{{ tinc_subnet }}"

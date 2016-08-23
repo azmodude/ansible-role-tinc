@@ -1,0 +1,6 @@
+---
+- name: Execute debug command for reachability
+  shell: /usr/bin/lsb_release -a
+  register: lsb
+- debug: var=lsb
+- debug: var=ansible_distribution

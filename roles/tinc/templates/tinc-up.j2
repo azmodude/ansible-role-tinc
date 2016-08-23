@@ -1,0 +1,5 @@
+#!/bin/sh
+# {{ ansible_managed }}
+ip link set $INTERFACE up
+ip addr add {{ tinc_first_three }}.{{ node_ip }}/32 dev $INTERFACE
+ip route add {{ tinc_network }} dev $INTERFACE

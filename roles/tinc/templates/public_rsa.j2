@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+Subnet = {{ tinc_first_three }}.{{ hostvars[item].node_ip }}/32
+{% if hostvars[item].node_address is defined %}
+Address = {{ hostvars[item].node_address }}
+{% endif %}
+{% if hostvars[item].node_port is defined %}
+Port = {{ hostvars[item].node_port }}
+{% endif %}
+
+{{ hostvars[item].rsa_public }}

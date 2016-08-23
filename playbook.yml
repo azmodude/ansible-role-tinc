@@ -1,0 +1,8 @@
+---
+- hosts: all
+  vars:
+    - debug: False
+
+  roles:
+    - { role: geerlingguy.repo-epel, become: yes, when: ansible_distribution == 'CentOS' }
+    - tinc

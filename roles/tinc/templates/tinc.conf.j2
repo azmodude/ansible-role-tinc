@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+Name = {{ inventory_hostname }}
+Device = {{ node_interface }}
+{% if node_port is defined %}
+Port = {{ node_port }}
+{% endif %}
+{% for connector in node_connect_to %}
+ConnectTo = {{ connector }}
+{% endfor %}

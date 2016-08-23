@@ -1,0 +1,14 @@
+- name: Check if ufw exists
+  stat: path=/usr/sbin/ufw
+  register: ufw
+- name: Open tinc firewall ports (Debian)
+  ufw: rule=allow port=655
+  when: ansible_distribution in ('Debian', 'Ubuntu') and ufw.stat.exists
+
+- name: Configure firewalld
+  firewalld:
+    service: tinc
+    permanent: True
+    state: enabled
+  notify: Reload firewalld
+  when: "'Fedora' in ansible_distribution"
