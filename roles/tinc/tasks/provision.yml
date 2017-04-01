@@ -1,4 +1,13 @@
 ---
+- name: Template nets.boot for Debian based systems
+  template:
+    src: nets.boot.j2
+    dest: /etc/tinc/nets.boot
+    owner: root
+    group: root
+    mode: 0600
+  when: ansible_distribution in ('Debian', 'Ubuntu')
+
 - name: Set tinc directory name
   set_fact:
     tinc_dir: "/etc/tinc/{{ tinc_name }}"
@@ -60,9 +69,6 @@
     - Enable and (Re-)start tinc (RedHat)
     - Enable and (Re-)start tinc (Fedora, Arch)
     - Enable and (Re-)start tinc (Debian)
-- name: Template nets.boot for Debian based systems
-  template: src=nets.boot.j2 dest=/etc/tinc/nets.boot owner=root group=root mode=0600
-  when: ansible_distribution in ('Debian', 'Ubuntu')
 
 - name: Check if /etc/NetworkManager/NetworkManager.conf exists
   stat:
@@ -75,7 +81,7 @@
 
 - name: Check if we actually use dnsmasq in combination with NetworkManager
   command: grep -Fxq "dns=dnsmasq" /etc/NetworkManager/NetworkManager.conf
-  always_run: True
+  check_mode: no
   ignore_errors: True
   changed_when: False
   register: networkmanager_usage
@@ -84,8 +90,20 @@
 - name: Template dnsmasq configuration
   template:
     src: tinc.dnsmasq.conf
-    dest: /etc/NetworkManager/dnsmasq.d/tinc.conf
+    dest: /etc/NetworkManager/dnsmasq.d/{{tinc_name}}.conf
     owner: root
     backup: yes
   when: dnsmasqd.stat.isdir is defined and dnsmasqd.stat.isdir and networkmanager_usage.rc == 0
   notify: Restart NetworkManager
+
+- name: Check if we are using unbound
+  stat:
+    path: /etc/unbound/unbound.conf
+  register: unbound
+- name: Template unbound configuration
+  template:
+    src: tinc.unbound.conf
+    dest: "/etc/unbound/{{tinc_name}}.conf"
+    owner: root
+    backup: yes
+  when: unbound.stat.exists

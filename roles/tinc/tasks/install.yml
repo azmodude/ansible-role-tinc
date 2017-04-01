@@ -6,7 +6,7 @@
   dnf: name=tinc state=present
   when: ansible_distribution == 'Fedora'
 - name: install tinc (Arch)
-  pacman: name=tinc state=present
+  package: name=tinc state=present
   when: ansible_distribution in 'Archlinux'
 - name: install tinc (Debian)
   apt: name=tinc state=present
